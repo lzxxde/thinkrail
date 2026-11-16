@@ -1302,6 +1302,27 @@ export type HostEnvironmentUpdateResult =
 	| { ok: true; status: HostEnvironmentStatus }
 	| { ok: false; issues: HostEnvironmentIssue[] };
 
+export interface HostProxy {
+	/** `http://host:port`; absent when the proxy is off. */
+	url?: string;
+	/** `NO_PROXY` list: comma- or whitespace-separated hosts that bypass the proxy. */
+	noProxy?: string;
+}
+
+export type HostProxyIssueCode = "invalidUrl" | "unsupportedScheme";
+
+export interface HostProxyStatus {
+	stored: HostProxy;
+	restartRequired: boolean;
+	/** Proxy names the launching environment already set, which the stored record never overrides. */
+	launchOverridden: string[];
+	effective: { httpProxy?: string; httpsProxy?: string; noProxy?: string };
+}
+
+export type HostProxyUpdateResult =
+	| { ok: true; status: HostProxyStatus }
+	| { ok: false; code: HostProxyIssueCode };
+
 export type ThemeId = string;
 
 export const THEME_MODES = ["fixed", "system"] as const;

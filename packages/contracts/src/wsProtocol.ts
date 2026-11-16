@@ -24,6 +24,9 @@ import type {
 	HostEnvironment,
 	HostEnvironmentStatus,
 	HostEnvironmentUpdateResult,
+	HostProxy,
+	HostProxyStatus,
+	HostProxyUpdateResult,
 	InstalledFontsResult,
 	JbcentralActionResult,
 	JbcentralConnectResult,
@@ -143,7 +146,8 @@ export type TemplateReadLocation =
 	| { projectId: string; workspaceId?: never }
 	| { workspaceId?: never; projectId?: never };
 
-export const PROTOCOL_VERSION = 122;
+export const PROTOCOL_VERSION = 123;
+export const HOST_PROXY_PROTOCOL_VERSION = 123;
 export const WORKSPACE_REVEAL_PATH_PROTOCOL_VERSION = 122;
 export const ARTIFACTS_PROTOCOL_VERSION = 121;
 export const IMAGE_REFS_PROTOCOL_VERSION = 120;
@@ -568,6 +572,8 @@ export const WS_METHODS = {
 	settingsUpdate: "settings.update",
 	environmentGet: "environment.get",
 	environmentUpdate: "environment.update",
+	proxyGet: "proxy.get",
+	proxyUpdate: "proxy.update",
 	feedbackRespond: "feedback.respond",
 	feedbackSurvey: "feedback.survey",
 	feedbackSurveySubmit: "feedback.survey.submit",
@@ -1399,6 +1405,8 @@ export interface WsMethodMap {
 		params: { environment: HostEnvironment };
 		result: HostEnvironmentUpdateResult;
 	};
+	"proxy.get": { params: Record<string, never>; result: HostProxyStatus };
+	"proxy.update": { params: { proxy: HostProxy }; result: HostProxyUpdateResult };
 	"feedback.respond": { params: { action: SurveyInvitationResponse }; result: Ack };
 	"feedback.survey": {
 		params: { language?: string };

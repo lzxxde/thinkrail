@@ -19,6 +19,7 @@ import {
 	DEFAULT_CONFIG,
 	type ExtensionSettingValues,
 	type HostEnvironment,
+	type HostProxy,
 	isComposerGrowthLimit,
 	isJbcentralQuotaRefreshSeconds,
 	isLineWidth,
@@ -761,6 +762,20 @@ export function loadHostEnvironment(): HostEnvironment {
 
 export function saveHostEnvironment(environment: HostEnvironment): void {
 	writeJsonAtomic("environment.json", environment, 0o600);
+}
+
+export function loadHostProxy(): HostProxy {
+	const value = readJson<Record<string, unknown>>("proxy.json", {}, isRecord);
+	const url = typeof value.url === "string" ? value.url : "";
+	const noProxy = typeof value.noProxy === "string" ? value.noProxy : "";
+	return {
+		...(url.trim().length > 0 ? { url: url.trim() } : {}),
+		...(noProxy.trim().length > 0 ? { noProxy: noProxy.trim() } : {}),
+	};
+}
+
+export function saveHostProxy(proxy: HostProxy): void {
+	writeJsonAtomic("proxy.json", proxy, 0o600);
 }
 
 export function ensureInstallation(): InstallationRecord {

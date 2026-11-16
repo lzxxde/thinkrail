@@ -24,6 +24,7 @@ import { ModelsSettings } from "./ModelsSettings";
 import { NotificationsSettings } from "./NotificationsSettings";
 import { PrivacySettings } from "./PrivacySettings";
 import { ProvidersSettings } from "./ProvidersSettings";
+import { ProxySettings } from "./ProxySettings";
 import { SettingsDialogContainer } from "./settingsDialogContainer";
 import { keepSettingsDraftOnEscape } from "./settingsDraft";
 import { resolveSettingsSection, settingsNavGroups } from "./settingsNav";
@@ -137,6 +138,8 @@ export function SettingsDialog({
 								<TemplatesSettings />
 							) : selectedSection === SettingsSection.Environment ? (
 								<EnvironmentSettings />
+							) : selectedSection === SettingsSection.Proxy ? (
+								<ProxySettings />
 							) : selectedSection === SettingsSection.Extensions ? (
 								<ExtensionsSettings />
 							) : selectedSection === SettingsSection.Chat ? (

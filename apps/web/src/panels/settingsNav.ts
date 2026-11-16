@@ -6,6 +6,7 @@ import {
 	RiDownloadCloud2Line,
 	RiFolderSettingsLine,
 	RiGitRepositoryLine,
+	RiGlobalLine,
 	RiKeyboardLine,
 	RiKeyLine,
 	RiLayoutGridLine,
@@ -23,6 +24,7 @@ import {
 	DEFAULT_MODEL_PROTOCOL_VERSION,
 	EXTENSION_CATALOG_PROTOCOL_VERSION,
 	HOST_ENVIRONMENT_PROTOCOL_VERSION,
+	HOST_PROXY_PROTOCOL_VERSION,
 	LOCALES_PROTOCOL_VERSION,
 	MCP_PROTOCOL_VERSION,
 	SPEECH_PROTOCOL_VERSION,
@@ -95,6 +97,12 @@ const NAV_GROUPS: SettingsNavGroup[] = [
 	{
 		label: "settings.nav.group.system",
 		sections: [
+			{
+				id: SettingsSection.Proxy,
+				label: "settings.nav.proxy",
+				icon: RiGlobalLine,
+				requiresProtocolVersion: HOST_PROXY_PROTOCOL_VERSION,
+			},
 			{
 				id: SettingsSection.Workspaces,
 				label: "settings.nav.workspaces",

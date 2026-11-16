@@ -736,7 +736,7 @@ a project picker, the prompt hero, and the reused
   create dialog.) **`SettingsDialog`** is the app-settings surface the shell's topbar gear opens — a
   **store-driven two-pane shell**: one nav list, rendered once, beside a scrollable content pane. At `md`+
   the list is a rail grouped **Agent** (Models, Providers, MCP servers, Prompt templates, Environment) ·
-  **Interface** (Chat, Appearance, Language, Layout, Terminal) · **System** (Workspaces, Integrations, Extensions,
+  **Interface** (Chat, Appearance, Language, Layout, Terminal) · **System** (Network proxy, Workspaces, Integrations, Extensions,
   Notifications, Privacy, Updates). Integrations keeps section id `github`: today it is the GitHub CLI page
   and it is the home for further integrations. Below `md` the same list is a horizontal scrolling strip without group labels. The
   Feedback card (`settings-nav-feedback`, “Share feedback”) belongs to that list at
@@ -1413,8 +1413,17 @@ a project picker, the prompt hero, and the reused
   `settings-environment-restart`; names set at launch carry a "Set at launch" badge. Pure draft helpers
   live in `panels/environmentDraft.ts`; the props-driven `EnvironmentForm` is what tests render. No folder
   picker: `dialog.selectDirectory` is the project-setup picker and records setup analytics.
+  **`ProxySettings`** (the **Network proxy** section, nav `settings-nav-proxy`, listed only at
+  `protocolVersion >= HOST_PROXY_PROTOCOL_VERSION`) edits the stored network proxy
+  ([[submodule-server-environment]]): one `http(s)://host:port` address (blank = direct) and a `NO_PROXY`
+  list. Same shape as Environment — `proxy.get` on mount into section-local state, an explicit draft with
+  Save / Discard, and a restart notice, because the host only reads the record at boot — plus the three
+  variables the host reports as in effect, so a user can see whether the running process actually routes.
+  `{ ok: false }` carries a single `code` (invalid URL / non-http scheme) that lands under the address
+  field, the only field it can be about. Pure draft helpers live in `panels/proxyDraft.ts`; the
+  props-driven `ProxyForm` is what tests render.
   `ProvidersSettings`/`McpSettings`/`AppearanceSettings`/`LineWidthControl`/`ChatSettings`/`TemplatesSettings`/
-  `WorkspacesSettings`/`PrivacySettings`/`ModelsSettings`/`FeedbackSettings`/`ExtensionsSettings`/`EnvironmentSettings`, the onboarding
+  `WorkspacesSettings`/`PrivacySettings`/`ModelsSettings`/`FeedbackSettings`/`ExtensionsSettings`/`EnvironmentSettings`/`ProxySettings`, the onboarding
   `ConnectProviderDialog`/`CreateProjectDialog`/`OnboardingWizard`, and the app-wide **`SurveyInvitationDialog`** /
   **`SurveyWindow`** are the panels-owned **integration pieces** (store + transport).
   `SettingsDialog` receives the Layout section from the

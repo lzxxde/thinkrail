@@ -38,6 +38,7 @@ import {
 	FS_MUTATIONS_PROTOCOL_VERSION,
 	GITHUB_STAR_PROTOCOL_VERSION,
 	HOST_ENVIRONMENT_PROTOCOL_VERSION,
+	HOST_PROXY_PROTOCOL_VERSION,
 	HOST_UPDATE_RUN_PROTOCOL_VERSION,
 	isBackgroundCommandCompletionMessage,
 	isCacheWarmingMode,
@@ -382,6 +383,13 @@ test("opening a path in the file manager is pinned to v122", () => {
 	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(WORKSPACE_REVEAL_PATH_PROTOCOL_VERSION);
 	expect(WORKSPACE_REVEAL_PATH_PROTOCOL_VERSION).toBe(122);
 	expect(WS_METHODS.workspaceRevealPath).toBe("workspace.revealPath");
+});
+
+test("the network proxy setting is pinned to v123", () => {
+	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(HOST_PROXY_PROTOCOL_VERSION);
+	expect(HOST_PROXY_PROTOCOL_VERSION).toBe(123);
+	expect(WS_METHODS.proxyGet).toBe("proxy.get");
+	expect(WS_METHODS.proxyUpdate).toBe("proxy.update");
 });
 
 test("the question panel height setting is pinned to v114", () => {

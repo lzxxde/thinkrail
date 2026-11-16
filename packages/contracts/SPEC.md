@@ -994,6 +994,11 @@ the palette ranks with — kept here so host-side search can rank with the same 
   `systemThemePair` are complete replacements; entering system mode requires a complete existing-or-incoming
   pair. A legacy `{ theme }` mutation without explicit `themeMode` means a fixed-theme selection and exits
   system mode; returns the merged config) /
+  **`proxy.get`** / **`proxy.update`** (`HOST_PROXY_PROTOCOL_VERSION`, v123; the stored network proxy — an
+  optional `http(s)://host:port` URL plus a `NO_PROXY` list — kept outside `AppConfig` for the same reason;
+  `get` → `HostProxyStatus` with `restartRequired`, `launchOverridden` names and the `HTTP_PROXY` /
+  `HTTPS_PROXY` / `NO_PROXY` values the running host has in effect; `update` replaces the record whole and
+  answers `{ ok: false, code }` — `invalidUrl` or `unsupportedScheme` — instead of saving) /
   **`environment.get`** / **`environment.update`** (`HOST_ENVIRONMENT_PROTOCOL_VERSION`, v91; the stored host environment — optional pi config folder
   plus ordered `{ name, value }` variables — outside `AppConfig`, never broadcast or in `server.welcome`
   because values may be secrets; `get` → `HostEnvironmentStatus` with `restartRequired`, `launchOverridden`

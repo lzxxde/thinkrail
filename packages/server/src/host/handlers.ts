@@ -119,7 +119,12 @@ import { providerFromRemoteUrl } from "../branch-review";
 import { forgetWorkspaceChanges, revertChange, undoChange } from "../changes";
 import { selectDirectory } from "../dialog";
 import { listAvailableEditors, openEditor, revealInFileManager } from "../editors";
-import { hostEnvironmentStatus, updateHostEnvironment } from "../environment";
+import {
+	hostEnvironmentStatus,
+	hostProxyStatus,
+	updateHostEnvironment,
+	updateHostProxy,
+} from "../environment";
 import { listExtensionCatalog } from "../extensions";
 import {
 	completeSurvey,
@@ -1593,6 +1598,8 @@ const handlers: WsHandlers = {
 	},
 	"environment.get": () => hostEnvironmentStatus(),
 	"environment.update": (params) => updateHostEnvironment(params.environment),
+	"proxy.get": () => hostProxyStatus(),
+	"proxy.update": (params) => updateHostProxy(params.proxy),
 	"feedback.respond": (params) => {
 		respondToInvitation(params.action);
 		return { ok: true } as const;

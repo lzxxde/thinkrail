@@ -63,3 +63,29 @@ ThinkRail terminal uses the same config folder.
   gains a scoped agent dir.
 - **Consequence the user accepted:** pi keeps transcripts under `<agentDir>/sessions`, so switching the
   folder hides chats made under another one until switched back, as in pi's CLI.
+
+## Network proxy
+
+The same module also owns the stored **network proxy** — one `http(s)://host:port` URL plus a `NO_PROXY`
+list — because it is the second thing that only exists to reach `process.env` before anything reads it.
+
+- **Surface:** `applyHostProxy()` (called only by `bootHost`, right after `applyHostEnvironment()`),
+  `hostProxyStatus()`, `updateHostProxy()`.
+- **Apply = set three variables.** When a URL is stored and the launch environment set neither
+  `HTTP_PROXY` nor `HTTPS_PROXY`, boot writes `HTTPS_PROXY` and `HTTP_PROXY` (one URL) and, when present,
+  `NO_PROXY`. Nothing else is needed: Bun reads `HTTP_PROXY` / `HTTPS_PROXY` / `ALL_PROXY` and `NO_PROXY`
+  **on every `fetch`**, so a boot-time write covers later requests, child processes and terminals alike.
+- **Precedence: launch env > stored proxy.** A launch that already carries `HTTPS_PROXY` (a shell export,
+  `HTTPS_PROXY=… thinkrail`) is reported in `launchOverridden` and the record is not applied — otherwise a
+  per-launch override could not be tested against a saved value.
+- **`http`/`https` only.** A `socks5://` URL is refused as `unsupportedScheme` instead of being written and
+  silently ignored: Bun's environment-proxy path skips non-HTTP schemes, so the user must point the record
+  at the client's HTTP (mixed) port. `invalidUrl` covers everything the URL parser rejects; there is no
+  separate empty-host case because the parser folds it into that error.
+- **Change = restart**, for the same split-process reason as the environment: `proxy.update` only persists
+  and `restartRequired` is "stored ≠ applied". The panel also shows what the running host actually has, so
+  a stale value is visible rather than guessed.
+- **Proxy beats an Environment row with the same name.** The environment record applies first, the proxy
+  second; a user who typed `HTTPS_PROXY` into the variable list while a proxy URL is stored gets the proxy.
+- **Storage:** `<dataDir>/proxy.json`, atomically replaced with mode `0600`; fetched only by `proxy.get`,
+  never broadcast (a proxy URL may embed credentials).
