@@ -89,6 +89,7 @@ jobs:
           path: |
             ${{ steps.build.outputs.artifact-path }}
             ${{ steps.build.outputs.desktop-artifact-path }}
+          if-no-files-found: error
           retention-days: 30
 
   publish:
@@ -118,7 +119,12 @@ jobs:
           notes="$(mktemp)"
           printf 'Artifacts built from commit %s (`%s`) on `%s`.\n\nTriggered by run [%s](%s/%s/actions/runs/%s).\n' \
             "$SHA" "$SHORT" "$REF_NAME" "$RUN_ID" "$SERVER_URL" "$REPOSITORY" "$RUN_ID" > "$notes"
-          gh release create "$tag" dist/* \
+          # `download-artifact` preserves each artifact's relative paths, so collect the files
+          # instead of handing the top-level directories to `gh release create`.
+          mapfile -t files < <(find dist -type f)
+          printf 'Attaching %d assets:\n' "${#files[@]}"
+          printf '  %s\n' "${files[@]}"
+          gh release create "$tag" "${files[@]}" \
             --repo "$REPOSITORY" \
             --title "Fork build ${RUN_NUMBER} (${SHORT})" \
             --prerelease \
