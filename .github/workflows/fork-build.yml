@@ -1,0 +1,125 @@
+name: Fork build
+
+# Fork-only. The upstream CI only runs gates and its native release matrix is private, so this workflow
+# reuses the public `.github/actions/build-binary` recipe on GitHub-hosted runners: every run produces
+# the CLI binary and the first-install desktop package for its platform, uploads them as run artifacts,
+# and attaches them to a per-run prerelease so older builds stay downloadable.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag or commit to build (defaults to the selected ref)"
+        required: false
+        type: string
+  push:
+    branches-ignore: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fork-build-${{ inputs.ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Resolve the source commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.src.outputs.sha }}
+      short: ${{ steps.src.outputs.short }}
+      ref: ${{ steps.src.outputs.ref }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+      - id: src
+        name: Resolve the built commit
+        shell: bash
+        run: |
+          set -eu
+          {
+            echo "sha=$(git rev-parse HEAD)"
+            echo "short=$(git rev-parse --short=7 HEAD)"
+            echo "ref=${{ inputs.ref || github.ref_name }}"
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build ${{ matrix.target }}
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: bun-linux-x64
+          - os: windows-2022
+            target: bun-windows-x64
+          - os: macos-15
+            target: bun-darwin-arm64
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - name: Install the Linux desktop runtime packages
+        if: runner.os == 'Linux'
+        uses: ./.github/actions/apt-packages
+        with:
+          set: desktop
+      - name: Build the native artifacts
+        id: build
+        uses: ./.github/actions/build-binary
+        with:
+          version: 0.0.0-fork.${{ needs.prepare.outputs.short }}
+          channel: nightly
+          target: ${{ matrix.target }}
+          posthog-project-key: phc_forkbuild0000000000000000000000
+      - name: Upload the ${{ matrix.target }} artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: thinkrail-${{ matrix.target }}
+          path: |
+            ${{ steps.build.outputs.artifact-path }}
+            ${{ steps.build.outputs.desktop-artifact-path }}
+          retention-days: 30
+
+  publish:
+    name: Publish the build for download
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create the per-build prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ needs.prepare.outputs.sha }}
+          SHORT: ${{ needs.prepare.outputs.short }}
+          REF_NAME: ${{ needs.prepare.outputs.ref }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_NUMBER: ${{ github.run_number }}
+          SERVER_URL: ${{ github.server_url }}
+          REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -eu
+          tag="fork-build-${RUN_NUMBER}"
+          notes="$(mktemp)"
+          printf 'Artifacts built from commit %s (`%s`) on `%s`.\n\nTriggered by run [%s](%s/%s/actions/runs/%s).\n' \
+            "$SHA" "$SHORT" "$REF_NAME" "$RUN_ID" "$SERVER_URL" "$REPOSITORY" "$RUN_ID" > "$notes"
+          gh release create "$tag" dist/* \
+            --repo "$REPOSITORY" \
+            --title "Fork build ${RUN_NUMBER} (${SHORT})" \
+            --prerelease \
+            --notes-file "$notes"
