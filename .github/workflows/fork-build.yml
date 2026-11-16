@@ -12,6 +12,12 @@ on:
         description: "Branch, tag or commit to build (defaults to the selected ref)"
         required: false
         type: string
+      channel:
+        description: "Release channel stamped into the app"
+        required: false
+        default: stable
+        type: choice
+        options: [stable, nightly]
   push:
     branches-ignore: [main]
 
@@ -79,7 +85,7 @@ jobs:
         uses: ./.github/actions/build-binary
         with:
           version: 0.0.0-fork.${{ needs.prepare.outputs.short }}
-          channel: nightly
+          channel: ${{ inputs.channel || 'stable' }}
           target: ${{ matrix.target }}
           posthog-project-key: phc_forkbuild0000000000000000000000
       - name: Upload the ${{ matrix.target }} artifacts
