@@ -1016,8 +1016,12 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   passive one lets Chromium apply the scroll before the wheel event reaches the hook, so the movement arrives
   without reader intent and neither detach nor exact-edge rearm fires. Scrolling stays responsive because a
   streaming delta re-renders only the rows whose content changed, keeping the main thread free.
-- **Composer & chrome** — `Composer` (prompt field + send/steer/followUp/abort, `@`-mentions (`mentionLookup` splits the typed
-  query into the folder `fs.readDir` lists and the name prefix, reading a typed `\` as a separator), `/`
+- **Composer & chrome** — `Composer` (prompt field + send/steer/followUp/abort, `@`-mentions (`mentionLookup` splits a typed
+  path into the folder `fs.readDir` lists and the name prefix, reading a typed `\` as a separator; ChatView
+  routes a bare `@` or a query ending at a separator to that listing, and everything else to
+  **`search.paths`** from v124 — the host's ranked files and folders for the whole worktree, so `ah`
+  reaches `packages/AxonHub` and a real prefix outranks an acronym — falling back to the level-by-level
+  listing on an older host, via **`mentionBrowses`**/**`supportsMentionSearch`** in `fileTargets`), `/`
   commands + template **slot sessions** (Tab-through placeholders — see the Template slots bullet
   below), image paste/drop — routed through **`imageAttachment.ts`**: `fileToAttachedImage` decodes in
   the browser and downscales anything over a **1568px long edge** (`fitWithin`; Claude's standard-tier

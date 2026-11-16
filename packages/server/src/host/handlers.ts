@@ -1660,6 +1660,7 @@ const handlers: WsHandlers = {
 	},
 
 	"search.query": (p, ctx) => hostSearch().query(p, { chats: seesChats(ctx.protocolVersion) }),
+	"search.paths": (p) => hostSearch().paths(p),
 	"search.text": (p, ctx) =>
 		hostSearch().text(ctx.clientKey, p, (batch) => publishSearchText(ctx.clientKey, batch)),
 	"search.preview": (p, ctx) => hostSearch().preview(p, { chats: seesChats(ctx.protocolVersion) }),

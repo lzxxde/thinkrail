@@ -21,6 +21,7 @@ import {
 	type Deadline,
 	emptyGroup,
 	groupOf,
+	isSubsequence,
 	snippetAround,
 } from "./hits";
 
@@ -55,16 +56,6 @@ function preparedOf(owner: object, text: string): PreparedContent {
 
 function foldedTermsOf(input: ProviderInput): string[] {
 	return input.terms.map((term) => foldMatchText(term.text)).filter(Boolean);
-}
-
-function isSubsequence(text: string, term: string): boolean {
-	let at = 0;
-	for (const char of term) {
-		at = text.indexOf(char, at);
-		if (at === -1) return false;
-		at += 1;
-	}
-	return true;
 }
 
 function wireRanges(ranges: readonly MatchRange[]): [number, number][] {

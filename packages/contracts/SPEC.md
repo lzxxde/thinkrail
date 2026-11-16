@@ -1041,7 +1041,12 @@ the palette ranks with — kept here so host-side search can rank with the same 
   **`search.query`** + **`search.preview`** (the palette's host
   providers from `SEARCH_PROTOCOL_VERSION`, v106: `{ query, kinds?, context, limit? }` → per-kind
   groups with the shared matcher's tiers; a preview is a bounded
-  transcript read that never attaches a session) / **`search.text`** (Find in Files from
+  transcript read that never attaches a session) / **`search.paths`** from
+  **`SEARCH_PATHS_PROTOCOL_VERSION`** (v124): `{ workspaceId, query, limit? }` → the composer's `@`
+  candidates, `PathEntry[]` (worktree-relative `path`, `name`, `kind`, the matcher's `tier` and `score`,
+  best first) plus the file list's `state`; files and the folders the list implies rank together, so a
+  bare name reaches a deep path instead of listing one folder's children — a client below v124 keeps the
+  level-by-level `fs.readDir` listing / **`search.text`** (Find in Files from
   `TEXT_SEARCH_PROTOCOL_VERSION`, v112: `{ seq, query, context, caseSensitive, wholeWord }` — a plain
   substring over the same one root as the `file` kind; answers `{ seq }` at once or `{ seq, superseded }`
   for a `seq` older than the client's latest, and streams the matches on the addressed

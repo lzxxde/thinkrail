@@ -1226,6 +1226,31 @@ describe("search.query", () => {
 	});
 });
 
+describe("search.paths", () => {
+	test("answers one workspace's ranked files and folders, folders and exact names first", async () => {
+		const files = new FileListCache(async (root) => lists[root] ?? { paths: [], truncated: false });
+		const service = createSearchService(readers({ files }));
+		const result = await service.paths({ workspaceId: "w-feature", query: "auth", limit: 5 });
+		expect(result.state).toBe("ready");
+		expect(result.entries.map((entry) => [entry.path, entry.kind])).toEqual([
+			["src/auth", "dir"],
+			["src/auth/refresh.ts", "file"],
+		]);
+	});
+
+	test("a query with no workspace to search answers failed, and a blank query stays empty", async () => {
+		const service = createSearchService(readers());
+		expect(await service.paths({ workspaceId: "w-missing", query: "auth" })).toEqual({
+			entries: [],
+			state: "failed",
+		});
+		expect(await service.paths({ workspaceId: "w-feature", query: "  " })).toEqual({
+			entries: [],
+			state: "ready",
+		});
+	});
+});
+
 describe("search.preview", () => {
 	test("a chat preview is a bounded transcript window around the focused message", async () => {
 		const service = createSearchService(readers());

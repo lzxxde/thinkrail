@@ -2140,6 +2140,24 @@ export interface SearchQueryResult {
 	groups: SearchGroup[];
 }
 
+/** One path `search.paths` offers the composer's `@` menu: a file or a folder, ranked by the shared matcher. */
+export interface PathEntry {
+	/** Worktree-relative POSIX path, the form an inserted mention uses. */
+	path: string;
+	/** The path's last segment. */
+	name: string;
+	kind: FileKind;
+	tier: MatchTier;
+	score: number;
+}
+
+export interface PathSearchResult {
+	/** Ranked best first: lower `tier`, then higher `score`; shallow paths win a tie. */
+	entries: PathEntry[];
+	/** `indexing`/`refreshing`: the file list behind `entries` is still loading. */
+	state: SearchGroupState;
+}
+
 export const TEXT_SEARCH_LIMITS = {
 	lines: 2000,
 	fileBytes: 1_000_000,

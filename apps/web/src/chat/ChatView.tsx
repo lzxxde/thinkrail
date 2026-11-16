@@ -58,7 +58,12 @@ import {
 } from "./Composer";
 import { DEFAULT_DOCK_FOLD, type DockFold, dockCollapsed, withDockCollapsed } from "./dockFold";
 import { ExtraUsageNotice } from "./ExtraUsageNotice";
-import { mentionLookup } from "./fileTargets";
+import {
+	mentionBrowses,
+	mentionLookup,
+	mentionSearchQuery,
+	supportsMentionSearch,
+} from "./fileTargets";
 import { HistoryOverlay } from "./HistoryOverlay";
 import { awaitingToolCallIdOf } from "./interactionState";
 import { McpServerDetail } from "./McpServerDetail";
@@ -95,6 +100,7 @@ import { useHistorySearch } from "./useHistorySearch";
 
 const TRY_AGAIN_PROMPT = "Try again.";
 const NOTHING_EXPANDED: Partial<Record<ResourceKind, boolean>> = {};
+const MENTION_LIMIT = 12;
 
 function renderSubagentModel({ model, thinkingLevel }: SubagentResourceSummary) {
 	return <RunModelLabel model={model} thinkingLevel={thinkingLevel} />;
@@ -460,14 +466,39 @@ export default function ChatView({
 		[canRenameChat, commands, t, templates],
 	);
 
+	const mentionSearches = useAppStore((s) => supportsMentionSearch(s.protocolVersion));
+
 	useEffect(() => {
 		if (mentionQuery === null) {
 			setMentionCandidates([]);
 			return;
 		}
-		const { dir, prefix } = mentionLookup(mentionQuery);
+		const browse = !mentionSearches || mentionBrowses(mentionQuery);
 		let cancelled = false;
 		const timer = setTimeout(() => {
+			if (!browse) {
+				getTransport()
+					.request("search.paths", {
+						workspaceId,
+						query: mentionSearchQuery(mentionQuery),
+						limit: MENTION_LIMIT,
+					})
+					.then((result) => {
+						if (cancelled) return;
+						setMentionCandidates(
+							result.entries.map((entry) => ({
+								path: entry.path,
+								name: entry.name,
+								kind: entry.kind,
+							})),
+						);
+					})
+					.catch(() => {
+						if (!cancelled) setMentionCandidates([]);
+					});
+				return;
+			}
+			const { dir, prefix } = mentionLookup(mentionQuery);
 			getTransport()
 				.request("fs.readDir", { workspaceId, path: dir })
 				.then((nodes) => {
@@ -475,7 +506,7 @@ export default function ChatView({
 					setMentionCandidates(
 						nodes
 							.filter((n) => n.name.toLowerCase().startsWith(prefix))
-							.slice(0, 12)
+							.slice(0, MENTION_LIMIT)
 							.map((n) => ({ path: n.path, name: n.name, kind: n.kind })),
 					);
 				})
@@ -487,7 +518,7 @@ export default function ChatView({
 			cancelled = true;
 			clearTimeout(timer);
 		};
-	}, [mentionQuery, workspaceId]);
+	}, [mentionQuery, workspaceId, mentionSearches]);
 
 	const onMentionQuery = useCallback((q: string | null) => setMentionQuery(q), []);
 

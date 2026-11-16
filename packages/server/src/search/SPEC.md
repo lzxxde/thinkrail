@@ -146,6 +146,34 @@ transcript may still be on disk, but nothing may reopen it.
   group; no snapshot is built for it), while its files, transcripts and plans stay searchable. The Chats
   container itself is never a root: a query in its context provisions nothing and answers no files.
 
+## Paths
+
+`search.paths { workspaceId, query, limit? }` is the composer `@` menu's provider: the same root and the
+same cached file list the `file` kind ranks, but it answers **files and folders together**, best first,
+and nothing else. A folder is not in the file list, so the provider derives it: every directory above a
+listed path (`apps` and `apps/web` for `apps/web/src/a.ts`), deduped and sorted once per list and kept in
+a `WeakMap` keyed by the indexed list, so a reload rebuilds it and a query does not. An empty or
+unreadable folder is absent; a folder that holds no listed file does not surface — the menu is a way to
+reach paths, and such a folder has no path to reach.
+
+- **Ranking** is the shared matcher over one `path: true` field and `compareEntries`: `tier` ascending
+  (so a typed prefix beats an acronym of the same letters), `score` descending, then the shallower path,
+  then lexicographic — deterministic across replies, and the same tiers the palette's `file` hits carry.
+- **The gate** decides which entries the full matcher ever sees, because a menu fires per keystroke and
+  the list can hold 128k names. A term admits an entry when the folded path contains it or when its
+  letters spell out the entry's basename initials — `ah` admits `packages/AxonHub` and `all-hands.md` —
+  which is exactly the acronym tier a substring test cannot express; the initials are built once per
+  loaded list beside the folders and dropped with it. Only when that gate yields fewer entries than the
+  menu can show does a second, loose pass admit plain subsequences (the matcher's lowest tier) and stop
+  after `PATH_LOOSE_CANDIDATES` of them. Each admitted entry still goes through `matchFields`, so the
+  gate never decides a tier or a score.
+- **Budgets:** the ranking gets `SEARCH_BUDGET.pathsQueryMs` after the reply's own cold wait — a menu
+  opens before the palette ever warms the list, so when no list is cached yet the answer waits at most
+  `pathsColdWaitMs` for that first load (in place of the palette's `reloadWaitMs` race) and then answers
+  what it has: `entries` from a stale list with `refreshing`, `indexing` while nothing is listed, `failed`
+  when no workspace of the asker resolves to a root. Unlike a palette group there is no `total` or cut —
+  the menu shows at most `limit` candidates and has no "how many more" to say.
+
 ## Text (Find in Files)
 
 `search.text { seq, query, context, caseSensitive, wholeWord }` searches file **contents** in the same

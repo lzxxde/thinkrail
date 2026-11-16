@@ -72,6 +72,7 @@ import {
 	REVIEW_ACTIONS_PROTOCOL_VERSION,
 	REVIEW_RICH_ANCHORS_PROTOCOL_VERSION,
 	readToolResponseMessage,
+	SEARCH_PATHS_PROTOCOL_VERSION,
 	SEARCH_PROTOCOL_VERSION,
 	SESSION_RENAME_PROTOCOL_VERSION,
 	SESSION_STATE_PROTOCOL_VERSION,
@@ -390,6 +391,12 @@ test("the network proxy setting is pinned to v123", () => {
 	expect(HOST_PROXY_PROTOCOL_VERSION).toBe(123);
 	expect(WS_METHODS.proxyGet).toBe("proxy.get");
 	expect(WS_METHODS.proxyUpdate).toBe("proxy.update");
+});
+
+test("ranked path search for the mention menu is pinned to v124", () => {
+	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(SEARCH_PATHS_PROTOCOL_VERSION);
+	expect(SEARCH_PATHS_PROTOCOL_VERSION).toBe(124);
+	expect(WS_METHODS.searchPaths).toBe("search.paths");
 });
 
 test("the question panel height setting is pinned to v114", () => {

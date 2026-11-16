@@ -1,4 +1,5 @@
 import type {
+	PathSearchResult,
 	Project,
 	SearchGroup,
 	SearchKind,
@@ -25,6 +26,7 @@ import type { SpecSections, SpecSnapshot } from "../spec";
 import type { StoredPlanFile } from "../todos";
 import { type FileList, FileListCache } from "./files";
 import { deadlineAt, emptyGroup } from "./hits";
+import { searchPaths } from "./paths";
 import {
 	type ChatLabel,
 	type FileStat,
@@ -71,6 +73,8 @@ const EVERY_CLIENT: SearchAudience = { chats: true };
 
 export interface SearchService {
 	query(params: WsParams<"search.query">, audience?: SearchAudience): Promise<SearchQueryResult>;
+	/** The `@` menu's ranked files and folders; no audience, a workspace's own paths are the asker's to see. */
+	paths(params: WsParams<"search.paths">): Promise<PathSearchResult>;
 	preview(target: SearchPreviewTarget, audience?: SearchAudience): Promise<SearchPreviewResult>;
 	text(
 		clientKey: string,
@@ -88,6 +92,8 @@ export const SEARCH_BUDGET = {
 	reloadWaitMs: 150,
 	queryMs: 300,
 	providerMs: 120,
+	pathsColdWaitMs: 800,
+	pathsQueryMs: 200,
 	previewMessages: 7,
 	previewMessageChars: 600,
 	previewIndexRounds: 40,
@@ -322,6 +328,32 @@ export function createSearchService(readers: SearchReaders): SearchService {
 					: emptyGroup("plan", "failed"),
 			);
 			return { groups };
+		},
+
+		async paths(params) {
+			const terms = parseMatchTerms(params.query.slice(0, MAX_SEARCH_QUERY_LENGTH).trim());
+			if (terms.length === 0) return { entries: [], state: "ready" };
+			const projects = visibleProjects(EVERY_CLIENT);
+			const root = resolveSearchRoot(projects, openWorkspaces(projects), {
+				workspaceId: params.workspaceId,
+			});
+			if (!root) return { entries: [], state: "failed" };
+			readers.watchRoot(root.workspaceId);
+			// The menu opens on a workspace's first keystroke long before the palette ever warms this list;
+			// wait out a cold load once instead of answering every cold keystroke with an empty menu.
+			if (files.peek(root.root, root.git) === null) {
+				await settledWithin([files.load(root.root, root.git)], SEARCH_BUDGET.pathsColdWaitMs);
+			}
+			const view = files.peek(root.root, root.git);
+			if (!view) return { entries: [], state: "indexing" };
+			return {
+				entries: searchPaths(view.list, {
+					terms,
+					limit: clampLimit(params.limit),
+					deadline: deadlineAt(now() + SEARCH_BUDGET.pathsQueryMs, now),
+				}),
+				state: view.state,
+			};
 		},
 
 		async preview(target, audience = EVERY_CLIENT) {

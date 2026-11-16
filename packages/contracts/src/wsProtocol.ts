@@ -45,6 +45,7 @@ import type {
 	MergePrResult,
 	OpenBranchReview,
 	OpenPrResult,
+	PathSearchResult,
 	PiPackageResourceType,
 	PiPackageScope,
 	PiPackageSummary,
@@ -146,7 +147,8 @@ export type TemplateReadLocation =
 	| { projectId: string; workspaceId?: never }
 	| { workspaceId?: never; projectId?: never };
 
-export const PROTOCOL_VERSION = 123;
+export const PROTOCOL_VERSION = 124;
+export const SEARCH_PATHS_PROTOCOL_VERSION = 124;
 export const HOST_PROXY_PROTOCOL_VERSION = 123;
 export const WORKSPACE_REVEAL_PATH_PROTOCOL_VERSION = 122;
 export const ARTIFACTS_PROTOCOL_VERSION = 121;
@@ -580,6 +582,7 @@ export const WS_METHODS = {
 	clientReportError: "client.reportError",
 	historySearch: "history.search",
 	searchQuery: "search.query",
+	searchPaths: "search.paths",
 	searchPreview: "search.preview",
 	searchText: "search.text",
 	reviewGet: "review.get",
@@ -1426,6 +1429,10 @@ export interface WsMethodMap {
 			limit?: number;
 		};
 		result: SearchQueryResult;
+	};
+	"search.paths": {
+		params: { workspaceId: string; query: string; limit?: number };
+		result: PathSearchResult;
 	};
 	"search.preview": { params: SearchPreviewTarget; result: SearchPreviewResult };
 	"search.text": {

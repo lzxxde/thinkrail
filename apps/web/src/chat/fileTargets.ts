@@ -1,3 +1,4 @@
+import { SEARCH_PATHS_PROTOCOL_VERSION } from "@thinkrail/contracts";
 import { isAbsolutePath, normalizePath, projectRelativePath } from "@/lib";
 
 const URI_SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*:/;
@@ -13,6 +14,24 @@ export function mentionLookup(query: string): { dir: string; prefix: string } {
 	return slash >= 0
 		? { dir: path.slice(0, slash), prefix: path.slice(slash + 1).toLowerCase() }
 		: { dir: "", prefix: path.toLowerCase() };
+}
+
+/**
+ * An empty query (a bare `@`) or one that ends at a separator browses that folder's children; anything
+ * else is a ranked search over the whole worktree, so a name typed halfway down the tree still matches.
+ */
+export function mentionBrowses(query: string): boolean {
+	const path = normalizePath(query);
+	return path === "" || path.endsWith("/");
+}
+
+export function mentionSearchQuery(query: string): string {
+	return normalizePath(query);
+}
+
+/** Hosts below v124 only list a folder's children for the prefix, so the menu keeps to that instead of searching. */
+export function supportsMentionSearch(protocolVersion: number | null | undefined): boolean {
+	return (protocolVersion ?? 0) >= SEARCH_PATHS_PROTOCOL_VERSION;
 }
 
 export function isWindowsAbsolutePath(value: string): boolean {

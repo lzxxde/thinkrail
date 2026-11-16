@@ -18,6 +18,17 @@ export function compareHits(a: SearchHit, b: SearchHit): number {
 	return a.tier - b.tier || b.score - a.score;
 }
 
+/** The cheap candidate gate the file scan applies before the full matcher: a non-literal term may match as a subsequence. */
+export function isSubsequence(text: string, term: string): boolean {
+	let at = 0;
+	for (const char of term) {
+		at = text.indexOf(char, at);
+		if (at === -1) return false;
+		at += 1;
+	}
+	return true;
+}
+
 export interface GroupOutcome {
 	readonly state?: SearchGroupState;
 	readonly timeCut?: boolean;
